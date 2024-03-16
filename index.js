@@ -1,29 +1,31 @@
 const express = require("express");
+const mongoose = require("mongoose");
 const cors = require("cors");
-
 const app = express();
 const PORT = process.env.PORT || 8080;
+const MONGODB_URI =
+  "mongodb+srv://arthurlynnwilliams01:Greed01!@cluster0.leuv2xg.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
 
 app.use(cors());
 app.use(express.json());
 
-let persons = [
-  {
-    id: 1,
-    name: "Arto Hellas",
-    number: "040-123456",
-  },
-  {
-    id: 2,
-    name: "Ada Lovelace",
-    number: "39-44-5323523",
-  },
-  {
-    id: 3,
-    name: "Dan Abramov",
-    number: "12-43-234345",
-  },
-];
+async function connectToDB(url) {
+  try {
+    await mongoose.connect(url);
+    console.log("Connected to MongoDB");
+  } catch (error) {
+    console.log(`Error connecting to DB: ${error}`);
+  }
+}
+
+connectToDB(MONGODB_URI);
+
+const personSchema = new mongoose.Schema({
+  name: String,
+  number: String,
+});
+
+const Person = mongoose.model("Person", personSchema);
 
 function generateId() {
   const maxId = persons.length > 0 ? Math.max(...persons.map((n) => n.id)) : 0;
@@ -31,8 +33,10 @@ function generateId() {
   return maxId + 1;
 }
 
-app.get("/api/persons", (req, res) => {
-  res.status(200).json(persons);
+app.get("/api/persons", (_req, res) => {
+  Person.find({}).then((persons) => {
+    res.status(200).json(persons);
+  });
 });
 
 app.post("/api/persons", (req, res) => {
